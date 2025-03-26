@@ -21,8 +21,7 @@ order by 1
 --New Deaths
 --Finds the date where each continent had their highest recorded new deaths
 with cte as (
-	select location, date,
-		new_deaths,
+	select location, date, new_deaths,
 		ROW_NUMBER() over (partition by location order by new_deaths desc) as ranking
 	from projectcovid..deaths
 	where total_cases != 0
@@ -86,19 +85,20 @@ WITH avg_new_cases as (
 SELECT location, Avg_Cases
 FROM avg_new_cases
 WHERE Avg_Cases > (SELECT AVG(Avg_Cases)
-					FROM avg_new_cases)
+		   FROM avg_new_cases)
 ORDER BY Avg_Cases DESC
 
 
 --Look at the rolling sums of testing and then vaccinations in a country
 SELECT d.location, d.date, 
-		v.new_tests, SUM(cast(v.new_tests as int)) OVER (partition by d.Location ORDER BY d.location, d.date) as Rolling_Tests,
-		v.new_vaccinations, SUM(cast(v.new_vaccinations as int)) OVER (partition by d.Location ORDER BY d.location, d.date) as Rolling_Vacs
+		v.new_tests, 
+		SUM(cast(v.new_tests as int)) OVER (partition by d.Location ORDER BY d.location, d.date) as Rolling_Tests,
+		v.new_vaccinations, 
+		SUM(cast(v.new_vaccinations as int)) OVER (partition by d.Location ORDER BY d.location, d.date) as Rolling_Vacs
 FROM projectcovid..deaths d
 JOIN projectcovid..vaccinations v
 ON d.location = v.location AND d.date = v.date
-WHERE d.continent != ''
-and d.location = 'Japan'
+WHERE d.continent != '' and d.location = 'Japan'
 order by d.location, d.date
 
 
@@ -124,8 +124,7 @@ order by hospitalization_percent desc
 --Create view for later use
 CREATE VIEW HighestRecordedDeath as 
 	with cte as (
-	select location, date,
-		new_deaths,
+	select location, date, new_deaths,
 		ROW_NUMBER() over (partition by location order by new_deaths desc) as ranking
 	from projectcovid..deaths
 	where total_cases != 0
